@@ -34,6 +34,9 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_KEY }}'
 
+# gcloud builds submit ${PWD} \
+# --config=./cloudbuild.yaml \
+# --project=${PROJECT}
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
