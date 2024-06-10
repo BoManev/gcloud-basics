@@ -35,7 +35,7 @@ jobs:
 
       - name: 'Build and push Image'
         run: gcloud builds submit . --tag ${{ env.GCP_REGION }}/${{ env.GCP_PROJECT }}/${{ env.GCP_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
+            
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy quickstart-app \
@@ -44,3 +44,4 @@ jobs:
             --platform "managed" \
             --port 80 \
             --quiet
+
