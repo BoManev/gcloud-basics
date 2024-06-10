@@ -4,8 +4,7 @@ env:
   GCP_REGION: us-west2-docker.pkg.dev
   GCP_PROJECT: effective-sonar-425922-q5
   GCP_REGISTRY: quickstart-docker-repo
-  IMAGE_NAME: quickstart
-  IMAGE_TAG: pr-${{ github.event.number }}
+  IMAGE_NAME: quickstart-pr-${{ github.event.number }}
 
 on:
   pull_request: 
@@ -35,4 +34,4 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: 'Build and push Image'
-        run: gcloud builds submit . --tag ${{ env.GCP_REGION }}/${{ env.GCP_PROJECT }}/${{ env.GCP_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        run: gcloud builds submit . --tag ${{ env.GCP_REGION }}/${{ env.GCP_PROJECT }}/${{ env.GCP_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
