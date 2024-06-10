@@ -14,18 +14,21 @@ on:
 
 
 jobs:
-  build-and-deploy:
+
+  build_and_deploy:
     runs-on: ubuntu-latest
     permissions: 
       contents: read
       id-token: write
+
+    outputs:
+      service_url: ${{ steps.deploy.outputs.service_url }}
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - id: "gcp_auth"
-        name: "Authenticate with Google Cloud"
+      - name: "Authenticate with Google Cloud"
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_KEY }}'
@@ -36,12 +39,50 @@ jobs:
       - name: 'Build and push Image'
         run: gcloud builds submit . --tag ${{ env.GCP_REGION }}/${{ env.GCP_PROJECT }}/${{ env.GCP_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
+      # Non-serving revisions do not consume any resources and are not billed. 
       - name: Deploy to Cloud Run
+        id: "deploy"
         run: |
-          gcloud run deploy quickstart-app \
-            --region us-west2 \
+          OUTPUT=$(gcloud run deploy quickstart-app \
+          --region us-west2 \
             --image ${{ env.GCP_REGION }}/${{ env.GCP_PROJECT }}/${{ env.GCP_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             --platform "managed" \
             --port 80 \
-            --quiet
+            --no-allow-unauthenticated \
+            --format="value(status.url)" \
+            --quiet)
+
+          echo "service_url=$OUTPUT" >> $GITHUB_OUTPUT
+
+
+  test:
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      id-token: write
+  
+    needs: build_and_deploy
+  
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+          
+      - name: Test
+        run: echo ${{ needs.build_and_deploy.outputs.service_url }}
+
+      - id: "service_auth"
+        name: "Authenticate with Google Cloud"
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_KEY }}'
+          token_format: "id_token"
+          id_token_audience: ${{ needs.build_and_deploy.outputs.service_url  }}
+       
+      - name: "Store ID token in env variable"
+        env:
+          ID_TOKEN: ${{ steps.service_auth.outputs.id_token }}
+        run: |
+          echo $ID_TOKEN
+
 
