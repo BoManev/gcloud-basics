@@ -79,10 +79,31 @@ jobs:
           token_format: "id_token"
           id_token_audience: ${{ needs.build_and_deploy.outputs.service_url  }}
        
-      - name: "Store ID token in env variable"
+      - name: Setup python
+        id: setup_python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Check python dependecy cache
+        id: setup_cache
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: pip-${{ steps.setup_python.outputs.python-version}}-${{ hashFiles('requirements-workflows.txt') }}
+
+      - name: Install dependecies
+        if: steps.setup_python.outputs.cache-hit != 'true'
+        run: |
+          if [ -d "venv" ]; then rm -rf venv; fi
+          python3 -m venv venv
+          venv/bin/python3 -m pip install -r requirements-workflows.txt
+        
+      - name: 
         env:
           ID_TOKEN: ${{ steps.service_auth.outputs.id_token }}
+          SERVICE_URL: ${{ needs.build_and_deploy.outputs.service_url }}
         run: |
-          echo $ID_TOKEN
+          PYTHONPATH="." venv/bin/python3 -u scripts/integration_test.py
 
 
