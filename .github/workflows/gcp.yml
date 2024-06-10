@@ -1,6 +1,7 @@
 name: Extraction Test
 
 env:
+  SERVICE_NAME: quickstart-app-${{ github.event.number }}
   GCP_REGION: us-west2-docker.pkg.dev
   GCP_PROJECT: effective-sonar-425922-q5
   GCP_REGISTRY: quickstart-docker-repo
@@ -43,7 +44,7 @@ jobs:
       - name: Deploy to Cloud Run
         id: "deploy"
         run: |
-          OUTPUT=$(gcloud run deploy quickstart-app \
+          OUTPUT=$(gcloud run deploy ${{ env.SERVICE_NAME }} \
           --region us-west2 \
             --image ${{ env.GCP_REGION }}/${{ env.GCP_PROJECT }}/${{ env.GCP_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             --platform "managed" \
@@ -105,5 +106,3 @@ jobs:
           SERVICE_URL: ${{ needs.build_and_deploy.outputs.service_url }}
         run: |
           PYTHONPATH="." venv/bin/python3 -u scripts/integration_test.py
-
-

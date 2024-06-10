@@ -1,0 +1,36 @@
+name: Extraction Test Cleanup
+
+env:
+  SERVICE_NAME: quickstart-app-${{ github.event.number }}
+  GCP_REGION: us-west2-docker.pkg.dev
+  GCP_PROJECT: effective-sonar-425922-q5
+  GCP_REGISTRY: quickstart-docker-repo
+  IMAGE_NAME: quickstart-pr-${{ github.event.number }}
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [closed]
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Authenticate with Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+
+      - name: 'Delete service'
+        run: gcloud run services delete ${{ env.SERVICE_NAME }} --region us-west2 --quiet
